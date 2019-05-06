@@ -1,4 +1,4 @@
-# webpush-go
+# {name}
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/SherClockHolmes/webpush-go)](https://goreportcard.com/report/github.com/SherClockHolmes/webpush-go)
 [![GoDoc](https://godoc.org/github.com/SherClockHolmes/webpush-go?status.svg)](https://godoc.org/github.com/SherClockHolmes/webpush-go)
@@ -26,16 +26,24 @@ const (
 	vapidPrivateKey = "<YOUR VAPID PRIVATE KEY>"
 )
 
-func main() `
+func main() {
+	subJSON := `{<YOUR SUBSCRIPTION JSON>}`
 
 	// Decode subscription
-	s := webpush.Subscription
-	if err := json.NewDecoder(bytes.NewBufferString(subJSON)).Decode(&s); err != nil 
+	s := webpush.Subscription{}
+	if err := json.NewDecoder(bytes.NewBufferString(subJSON)).Decode(&s); err != nil {
+		log.Fatal(err)
+	}
 
 	// Send Notification
-	_, err := webpush.SendNotification([]byte("Test"), &s, &webpush.Options)
-	if err != nil 
-
+	_, err := webpush.SendNotification([]byte("Test"), &s, &webpush.Options{
+		Subscriber:      "<EMAIL@EXAMPLE.COM>",
+		VAPIDPrivateKey: vapidPrivateKey,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 ```
 
 ### Generating VAPID Keys
@@ -44,7 +52,9 @@ Use the helper method `GenerateVAPIDKeys` to generate the VAPID key pair.
 
 ```golang
 privateKey, publicKey, err := webpush.GenerateVAPIDKeys()
-if err != nil 
+if err != nil {
+    // TODO: Handle failure!
+}
 ```
 
 ## Development
