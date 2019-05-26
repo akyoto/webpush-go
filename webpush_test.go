@@ -3,8 +3,6 @@ package webpush
 import (
 	"net/http"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 type testHTTPClient struct{}
@@ -13,7 +11,7 @@ func (*testHTTPClient) Do(*http.Request) (*http.Response, error) {
 	return &http.Response{StatusCode: 201}, nil
 }
 
-func getTestSubscription() *Subscription {
+func getURLEncodedTestSubscription() *Subscription {
 	return &Subscription{
 		Endpoint: "https://updates.push.services.mozilla.com/wpush/v2/gAAAAA",
 		Keys: Keys{
@@ -23,18 +21,58 @@ func getTestSubscription() *Subscription {
 	}
 }
 
-func TestSendNotification(t *testing.T) {
-	assert := assert.New(t)
+func getStandardEncodedTestSubscription() *Subscription {
+	return &Subscription{
+		Endpoint: "https://updates.push.services.mozilla.com/wpush/v2/gAAAAA",
+		Keys: Keys{
+			P256dh: "BNNL5ZaTfK81qhXOx23+wewhigUeFb632jN6LvRWCFH1ubQr77FE/9qV1FuojuRmHP42zmf34rXgW80OvUVDgTk=",
+			Auth:   "zqbxT6JKstKSY9JKibZLSQ==",
+		},
+	}
+}
 
-	resp, err := SendNotification([]byte("Test"), getTestSubscription(), &Options{
+func TestSendNotificationToURLEncodedSubscription(t *testing.T) {
+	resp, err := SendNotification([]byte("Test"), getURLEncodedTestSubscription(), &Options{
 		HTTPClient:      &testHTTPClient{},
-		Subscriber:      "mailto:<EMAIL@EXAMPLE.COM>",
+		RecordSize:      3070,
+		Subscriber:      "<EMAIL@EXAMPLE.COM>",
+		Topic:           "test_topic",
+		TTL:             0,
+		Urgency:         "low",
+		VAPIDPublicKey:  "test-public",
+		VAPIDPrivateKey: "test-private",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if resp.StatusCode != 201 {
+		t.Fatalf(
+			"Incorreect status code, expected=%d, got=%d",
+			resp.StatusCode,
+			201,
+		)
+	}
+}
+
+func TestSendNotificationToStandardEncodedSubscription(t *testing.T) {
+	resp, err := SendNotification([]byte("Test"), getStandardEncodedTestSubscription(), &Options{
+		HTTPClient:      &testHTTPClient{},
+		Subscriber:      "<EMAIL@EXAMPLE.COM>",
 		Topic:           "test_topic",
 		TTL:             0,
 		Urgency:         "low",
 		VAPIDPrivateKey: "testKey",
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 
-	assert.Equal(201, resp.StatusCode)
-	assert.Nil(err)
+	if resp.StatusCode != 201 {
+		t.Fatalf(
+			"Incorreect status code, expected=%d, got=%d",
+			resp.StatusCode,
+			201,
+		)
+	}
 }
